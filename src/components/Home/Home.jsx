@@ -47,7 +47,7 @@ const Home = () => {
           {products.map((product) => (
             <div key={product.id} className="p-4">
               <div className="bg-white p-4 rounded-lg shadow-lg transition-transform transform hover:scale-105">
-                <Link to={`/products/${product.id}`}>
+                <Link to={`/products/{product.id}`}>
                   <img
                     src={images[product.image]}
                     alt={product.name}
