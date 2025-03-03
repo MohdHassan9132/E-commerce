@@ -58,7 +58,7 @@ const Home = () => {
                   </h3>
                 </Link>
                 <p className="text-yellow-600 font-bold mt-2 text-lg">
-                  ${product.price}
+                  {product.price}
                 </p>
                 <button
                   onClick={() => addToCart(product)}
