@@ -23,7 +23,7 @@ const Products = () => {
           <p className="text-green-600 text-2xl font-semibold mt-3">{product.price}</p>
           <button
             onClick={() => addToCart(product)}
-            className="mt-6 px-6 py-2 bg-yellow-500 text-white font-semibold rounded-md hover:bg-yellow-600 transition-all"
+            className="mt-6 px-6 py-2  bg-green-800 text-white font-semibold rounded-md hover:bg-yellow-600 transition-all"
           >
             Add to Cart
           </button>
@@ -51,7 +51,7 @@ const Products = () => {
             </Link>
             <button
               onClick={() => addToCart(product)}
-              className="mt-4 px-4 py-2 bg-yellow-500 text-white font-semibold rounded-md hover:bg-yellow-600 transition-all"
+              className="mt-4 px-4 py-2  bg-green-800 text-white font-semibold rounded-md hover:bg-yellow-600 transition-all"
             >
               Add to Cart
             </button>
