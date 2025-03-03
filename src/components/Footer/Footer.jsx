@@ -9,10 +9,10 @@ function Footer() {
       </p>
 
       {/* Contact Information */}
-      <div className="flex justify-center items-center gap-24 mt-4">
+      <div className="flex flex-col md:flex-row justify-center items-center gap-6 md:gap-24 mt-4">
         {/* Phone Number */}
         <div className="flex items-center gap-2">
-          <FaPhoneAlt className="text-white text-xl transition-colors duration-300 group-hover:text-yellow-300" />
+          <FaPhoneAlt className="text-white text-xl transition-colors duration-300 hover:text-yellow-300" />
           <a
             href="tel:8700629458"
             className="text-white font-medium transition-colors duration-300 hover:text-yellow-300 active:scale-95"
@@ -23,7 +23,7 @@ function Footer() {
 
         {/* Email Address */}
         <div className="flex items-center gap-2">
-          <FaEnvelope className="text-white text-xl transition-colors duration-300 group-hover:text-yellow-300" />
+          <FaEnvelope className="text-white text-xl transition-colors duration-300 hover:text-yellow-300" />
           <a
             href="mailto:mohdsadiqameen989@gmail.com"
             className="text-white font-medium transition-colors duration-300 hover:text-yellow-300 active:scale-95"
@@ -37,4 +37,3 @@ function Footer() {
 }
 
 export default Footer;
-
