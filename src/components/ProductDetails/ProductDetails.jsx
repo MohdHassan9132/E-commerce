@@ -1,26 +1,78 @@
+import React, { useEffect, useState, useContext } from "react";
 import { useParams } from "react-router-dom";
-import images from "../../data/images";
-import products from "../../data/product";
-import { CartContext } from "../../context/CartContext";
-import { useContext } from "react";
-const ProductDetails = () => {
-  const {addToCart} = useContext(CartContext)
-  const { id } = useParams();
-  const product = products.find((p) => p.id === Number(id));
+import { databases, storage } from "../../appwriteConfig";
+import { CartContext } from "../../context/CartContext"; // Import CartContext for addToCart
 
-  if (!product) return <h1 className="text-center text-red-500 text-xl">Product Not Found</h1>;
+const DATABASE_ID = "67c6ae2b003333b15b7a";
+const COLLECTION_ID = "67c6ae48001b7a650f40";
+const BUCKET_ID = "67c6c224003c507f072a";
+
+const ProductDetails = () => {
+  const { id } = useParams(); // Get product id from the route
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { addToCart } = useContext(CartContext); // Get addToCart from context
+
+  useEffect(() => {
+    const fetchProductDetails = async () => {
+      try {
+        // Fetch the product document using the product id
+        const response = await databases.getDocument(
+          DATABASE_ID,
+          COLLECTION_ID,
+          id
+        );
+
+        // Convert image id to URL (if image exists)
+        const imageUrl = response.image
+          ? storage.getFilePreview(BUCKET_ID, response.image)
+          : null;
+
+        // Store product details along with the preview URL
+        setProduct({ ...response, imageUrl });
+      } catch (err) {
+        console.error("Error fetching product details:", err);
+        setError("Failed to load product details.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProductDetails();
+  }, [id]);
+
+  if (loading) {
+    return <div className="container mx-auto p-4">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="container mx-auto p-4">{error}</div>;
+  }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex flex-col md:flex-row items-center">
-        {/* ✅ Fix: Use images[product.image] */}
-        <img src={images[product.image]} alt={product.name} className="w-96 h-96 object-cover rounded-md shadow-lg" />
-        <div className="md:ml-10 mt-6 md:mt-0">
-          <h1 className="text-3xl font-bold">{product.name}</h1>
-          <p className="text-gray-600 mt-2">{product.description}</p>
-          <p className="text-2xl font-semibold text-green-600 mt-3">{product.price}</p>
-          <button onClick={()=> addToCart(product)} className="mt-6 px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Add to Cart</button>
-        </div>
+    <div className="container mx-auto p-4 max-w-2xl">
+      <div className="bg-white shadow-md rounded-lg p-4">
+        {product.imageUrl ? (
+          <img
+            src={product.imageUrl}
+            alt={product.name}
+            className="w-full h-56 md:h-80 object-contain rounded-md bg-gray-100"
+          />
+        ) : (
+          <div className="w-full h-56 md:h-80 flex items-center justify-center bg-gray-200 rounded-md">
+            No Image
+          </div>
+        )}
+        <h1 className="text-2xl font-bold mt-4">{product.name}</h1>
+        <p className="text-xl text-green-600 mt-2">₹{product.price}</p>
+        <button
+          onClick={() => addToCart(product)}
+          className="bg-green-800 text-white px-4 py-2 rounded mt-2"
+        >
+          Add to Cart
+        </button>
+        <p className="mt-4">{product.description}</p>
       </div>
     </div>
   );

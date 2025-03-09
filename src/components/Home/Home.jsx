@@ -1,31 +1,45 @@
-import { Link } from "react-router-dom";
-import Slider from "react-slick";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
-import images from "../../data/images";
-import products from "../../data/product";
+import { useEffect, useState, useContext } from "react";
+import { databases, storage } from "../../appwriteConfig";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Pagination, Autoplay } from "swiper/modules";
 import { CartContext } from "../../context/CartContext";
-import { useContext } from "react";
+import { Link } from "react-router-dom"; // Import Link
+
+import "swiper/css";
+import "swiper/css/pagination";
+import "swiper/css/autoplay";
+
+const DATABASE_ID = "67c6ae2b003333b15b7a";
+const COLLECTION_ID = "67c6ae48001b7a650f40";
+const BUCKET_ID = "67c6c224003c507f072a";
 
 const Home = () => {
+  const [products, setProducts] = useState([]);
   const { addToCart } = useContext(CartContext);
 
-  const settings = {
-    dots: true,
-    infinite: true,
-    speed: 700,
-    slidesToShow: 3,
-    slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 3000,
-    responsive: [
-      { breakpoint: 1024, settings: { slidesToShow: 2 } },
-      { breakpoint: 768, settings: { slidesToShow: 1 } },
-    ],
+  const fetchProducts = async () => {
+    try {
+      const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID);
+
+      const updatedProducts = response.documents.map((product) => ({
+        ...product,
+        imageUrl: product.image
+          ? storage.getFilePreview(BUCKET_ID, product.image)
+          : null,
+      }));
+
+      setProducts(updatedProducts);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    }
   };
 
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
   return (
-    <div className="container mx-auto px-4 bg-gray-50">
+    <div className="container mx-auto p-4">
       {/* Hero Section */}
       <section className="w-full bg-gradient-to-r from-green-900 to-green-800 text-center py-20 shadow-xl rounded-lg mt-6">
         <h1 className="text-4xl md:text-5xl font-extrabold text-white drop-shadow-lg">
@@ -44,45 +58,53 @@ const Home = () => {
 
       {/* Product Slider Section */}
       <section className="mt-16 px-4">
-        <h2 className="text-3xl font-bold text-green-900 text-center mb-8 relative">
-          <span className="inline-block relative z-10">
-            Best-Selling Dairy Products 🏆
-          </span>
-          <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-yellow-400 rounded-full"></span>
-        </h2>
-        <div className="max-w-6xl mx-auto">
-          <Slider {...settings}>
-            {products.map((product) => (
-              <div key={product.id} className="p-4">
-                <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-all border-t-4 border-green-800">
-                  <Link to={`/products/${product.id}`}>
-                    <div className="overflow-hidden rounded-lg mb-4">
-                      <img
-                        src={images[product.image]}
-                        alt={product.name}
-                        className="h-44 md:h-56 w-full object-contain transform hover:scale-105 transition-transform"
-                      />
-                    </div>
-                    <h3 className="text-xl font-semibold text-green-900">
-                      {product.name}
-                    </h3>
-                  </Link>
-                  <p className="text-yellow-600 font-bold mt-2 text-lg">
-                    {product.price}
-                  </p>
-                  <button
-                    onClick={() => addToCart(product)}
-                    className="mt-4 w-full px-5 py-3 bg-green-800 text-white font-semibold rounded-lg hover:bg-green-700 transition-all flex items-center justify-center space-x-2"
-                  >
-                    <span>Add to Cart</span>
-                    <span className="text-yellow-300">+</span>
-                  </button>
-                </div>
-              </div>
-            ))}
-          </Slider>
-        </div>
-      </section>
+      <h2 className="text-3xl font-bold text-green-900 text-center mb-8 relative">
+  <span className="inline-block relative z-10">
+    Best-Selling Dairy Products 🏆
+  </span>
+  <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-yellow-400 rounded-full"></span>
+</h2>
+
+<Swiper
+  slidesPerView={1}
+  spaceBetween={10}
+  breakpoints={{
+    640: { slidesPerView: 2, spaceBetween: 20 },
+    1024: { slidesPerView: 3, spaceBetween: 30 },
+  }}
+  pagination={{ clickable: true, el: ".custom-pagination" }}
+  autoplay={{ delay: 3000, disableOnInteraction: false }}
+  modules={[Pagination, Autoplay]}
+  className="w-full pb-12" // Increased padding bottom to prevent cutting off dots
+>
+  {products.map((product) => (
+    <SwiperSlide key={product.$id} className="p-4">
+<div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-all border-t-4 border-green-800  duration-300  hover:scale-105">  {product.imageUrl ? (
+    <Link to={`/products/${product.$id}`}>
+      <img
+        src={product.imageUrl}
+        alt={product.name}
+        className="h-44 md:h-56 w-full object-contain transform hover:scale-105 transition-transform"/>
+    </Link>
+  ) : (
+    <div className="w-full h-52 flex items-center justify-center bg-gray-200 rounded-md">
+      No Image
+    </div>
+        )}
+        <h2 className="text-lg font-semibold mt-2">{product.name}</h2>
+        <p className="text-green-600 font-bold text-xl">₹{product.price}</p>
+        <button
+          onClick={() => addToCart(product)}
+          className="mt-4 w-full px-5 py-3 bg-green-800 text-white font-semibold rounded-lg hover:bg-green-700 transition-all flex items-center justify-center space-x-2"        >
+          Add to Cart
+        </button>
+      </div>
+    </SwiperSlide>
+  ))}
+</Swiper>
+{/* Custom Pagination Dots */}
+<div className="custom-pagination flex justify-center mt-6"></div>
+</section>
 
       {/* Features Section */}
       <section className="mt-20 text-center px-6">
@@ -187,7 +209,7 @@ const Home = () => {
         </p>
         <Link to="/products">
           <button className="mt-8 px-8 py-3 bg-yellow-500 text-green-900 font-bold rounded-full hover:bg-yellow-400 transition-all transform hover:scale-105 shadow-lg relative z-10">
-            Browse Products 🛍️
+            Browse Products 🛍
           </button>
         </Link>
         <div className="mt-6 inline-block bg-red-600 text-white px-4 py-2 rounded-full text-sm font-bold animate-pulse relative z-10">

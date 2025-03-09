@@ -1,24 +1,21 @@
 import { StrictMode } from "react";
+import { AuthProvider } from "./context/AuthContext.jsx";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.jsx";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { ClerkProvider, SignUp } from "@clerk/clerk-react";
+import { CartProvider } from "./context/CartContext";
 import Home from "./components/Home/Home.jsx";
 import Products from "./components/Products/Products.jsx";
 import ProductDetails from "./components/ProductDetails/ProductDetails.jsx";
 import Profile from "./components/Profile/Profile.jsx";
 import Cart from "./components/Cart/Cart.jsx";
-import { CartProvider } from "./context/CartContext";
 import Checkout from "./components/Checkout/Checkout.jsx";
+import Orders from "./components/Orders/Orders.jsx"; // New Orders page
 import Login from "./components/Login/Login.jsx";
+import SignUp from "./components/SignUp/Signup.jsx";
 import Logout from "./components/Logout/Logout.jsx";
-
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-
-if (!PUBLISHABLE_KEY) {
-  throw new Error("Clerk Publishable Key is missing. Check your .env file.");
-}
+import AddProduct from "./components/AddProduct/AddProduct.jsx";
 
 const router = createBrowserRouter([
   {
@@ -31,19 +28,21 @@ const router = createBrowserRouter([
       { path: "profile", element: <Profile /> },
       { path: "cart", element: <Cart /> },
       { path: "checkout", element: <Checkout /> },
-      { path: "logout", element: <Logout /> },
-      { path: "signup", element: <SignUp /> },
+      { path: "orders", element: <Orders /> }, // Orders page route
       { path: "login", element: <Login /> },
+      { path: "signup", element: <SignUp /> },
+      { path: "logout", element: <Logout /> },
+      { path: "addproducts", element: <AddProduct /> },
     ],
   },
 ]);
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-      <CartProvider>
-        <RouterProvider router={router} />
-      </CartProvider>
-    </ClerkProvider>
+    <CartProvider>
+    <AuthProvider>
+      <RouterProvider router={router} />
+      </AuthProvider>
+    </CartProvider>
   </StrictMode>
 );

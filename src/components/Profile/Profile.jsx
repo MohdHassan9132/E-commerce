@@ -1,54 +1,85 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { account, databases, DATABASE_ID, USERS_COLLECTION_ID } from "../../appwriteConfig";
+import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../../context/AuthContext";
 
 const Profile = () => {
-  const [user, setUser] = useState({
-    name: "John Doe",
-    email: "johndoe@example.com",
-    phone: "+91 9876543210",
-    address: "123, Street Name, City, India",
-    subscription: "Standard Plan - ₹799/month",
+  const { user, userDoc, setUserDoc, updateUserProfile, loading } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const [editing, setEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    phone: userDoc?.phone || "",
+    address: userDoc?.address || "",
   });
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [updatedUser, setUpdatedUser] = useState({ ...user });
-
-  const handleChange = (e) => {
-    setUpdatedUser({ ...updatedUser, [e.target.name]: e.target.value });
+  const handleInputChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSave = () => {
-    setUser(updatedUser);
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      const updatedDoc = await databases.updateDocument(DATABASE_ID, USERS_COLLECTION_ID, user.$id, formData);
+      setUserDoc(updatedDoc);
+      updateUserProfile();
+      setEditing(false);
+    } catch (error) {
+      console.error("Error updating profile:", error.message);
+    }
   };
+
+  const handleLogout = async () => {
+    try {
+      await account.deleteSession("current");
+      navigate("/");
+      window.location.reload(); // Ensure full reset
+    } catch (error) {
+      console.error("Logout failed:", error.message);
+    }
+  };
+
+  if (loading) {
+    return <div className="text-center mt-10 text-lg">Loading profile...</div>;
+  }
 
   return (
-    <div className="container mx-auto p-6 max-w-lg">
-      <h1 className="text-3xl font-bold text-center mb-6">My Profile</h1>
-      <div className="bg-white p-6 shadow-md rounded-lg">
-        {!isEditing ? (
-          <>
-            <p className="text-lg"><strong>Name:</strong> {user.name}</p>
-            <p className="text-lg"><strong>Email:</strong> {user.email}</p>
-            <p className="text-lg"><strong>Phone:</strong> {user.phone}</p>
-            <p className="text-lg"><strong>Address:</strong> {user.address}</p>
-            <p className="text-lg font-semibold text-yellow-600"><strong>Subscription:</strong> {user.subscription}</p>
-            <button onClick={() => setIsEditing(true)} className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 transition">
-              Edit Profile
-            </button>
-          </>
-        ) : (
-          <>
-            <input type="text" name="name" value={updatedUser.name} onChange={handleChange} className="border p-2 w-full mt-2" placeholder="Name" />
-            <input type="email" name="email" value={updatedUser.email} onChange={handleChange} className="border p-2 w-full mt-2" placeholder="Email" />
-            <input type="tel" name="phone" value={updatedUser.phone} onChange={handleChange} className="border p-2 w-full mt-2" placeholder="Phone" />
-            <input type="text" name="address" value={updatedUser.address} onChange={handleChange} className="border p-2 w-full mt-2" placeholder="Address" />
-            <button onClick={handleSave} className="mt-4 px-6 py-2 bg-green-500 text-white rounded-lg shadow-md hover:bg-green-600 transition">
-              Save
-            </button>
-          </>
-        )}
-      </div>
+    <div className="max-w-lg mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
+      <h2 className="text-3xl font-bold text-center mb-6">My Profile</h2>
+      {userDoc ? (
+        <>
+          <p className="text-xl"><strong>Name:</strong> {userDoc.name}</p>
+          <p className="text-xl"><strong>Email:</strong> {userDoc.email}</p>
+          {editing ? (
+            <>
+              <input
+                type="text"
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+                className="border p-2 w-full mb-2"
+              />
+              <input
+                type="text"
+                name="address"
+                value={formData.address}
+                onChange={handleInputChange}
+                className="border p-2 w-full"
+              />
+              <button onClick={handleSave} className="bg-blue-500 text-white px-4 py-2 rounded mt-4">Save</button>
+            </>
+          ) : (
+            <>
+              <p className="text-xl"><strong>Phone:</strong> {userDoc.phone || "Not set"}</p>
+              <p className="text-xl"><strong>Address:</strong> {userDoc.address || "Not set"}</p>
+              <button onClick={() => setEditing(true)} className="bg-yellow-500 text-white px-4 py-2 rounded mt-4">Edit</button>
+            </>
+          )}
+          <button onClick={handleLogout} className="bg-red-500 text-white px-4 py-2 rounded mt-4">Logout</button>
+        </>
+      ) : (
+        <p className="text-red-500 text-center">User data not found.</p>
+      )}
     </div>
   );
 };
+
 export default Profile;

@@ -1,58 +1,65 @@
-import { useContext } from "react";
+import { useEffect, useState, useContext } from "react";
+import { databases, storage } from "../../appwriteConfig";
 import { CartContext } from "../../context/CartContext";
-import { Link, useParams } from "react-router-dom";
-import images from "../../data/images";
-import products from "../../data/product";
+import { Link } from "react-router-dom"; // Import Link
+
+const DATABASE_ID = "67c6ae2b003333b15b7a";
+const COLLECTION_ID = "67c6ae48001b7a650f40";
+const BUCKET_ID = "67c6c224003c507f072a";
 
 const Products = () => {
-  const { id } = useParams();
+  const [products, setProducts] = useState([]);
   const { addToCart } = useContext(CartContext);
 
-  if (id) {
-    const product = products.find((p) => p.id === Number(id));
-    return product ? (
-      <div className="flex flex-col md:flex-row items-center bg-white p-6 rounded-lg shadow-lg">
-        <img 
-          src={images[product.image]} 
-          alt={product.name} 
-          className="w-96 h-96 object-cover rounded-md shadow-md transition-transform duration-300 hover:scale-105" 
-        />
-        <div className="md:ml-10 mt-6 md:mt-0 text-center md:text-left">
-          <h1 className="text-3xl font-bold text-yellow-600">{product.name}</h1>
-          <p className="text-gray-600 mt-2">{product.description}</p>
-          <p className="text-green-600 text-2xl font-semibold mt-3">{product.price}</p>
-          <button
-            onClick={() => addToCart(product)}
-            className="mt-6 px-6 py-2  bg-green-800 text-white font-semibold rounded-md hover:bg-yellow-600 transition-all"
-          >
-            Add to Cart
-          </button>
-        </div>
-      </div>
-    ) : (
-      <h1 className="text-center text-red-500 text-xl font-semibold">Product Not Found</h1>
-    );
-  }
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID);
+
+        const updatedProducts = response.documents.map((product) => ({
+          ...product,
+          imageUrl: product.image
+            ? storage.getFilePreview(BUCKET_ID, product.image)
+            : null,
+        }));
+
+        setProducts(updatedProducts);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold text-yellow-600 text-center">Our Products</h1>
-      <div className="grid md:grid-cols-3 gap-6 mt-6">
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold text-center mb-4">All Products</h1>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {products.map((product) => (
-          <div key={product.id} className="bg-white p-4 rounded-lg shadow-md text-center transition-all duration-300 hover:shadow-lg hover:scale-105">
-            <Link to={`/products/${product.id}`} className="block">
-              <img 
-                src={images[product.image]} 
-                alt={product.name} 
-                className="w-full h-48 object-cover rounded-md" 
-              />
-              <h2 className="text-xl font-semibold mt-4 text-gray-800">{product.name}</h2>
-              <p className="text-yellow-600 font-semibold">{product.price}</p>
-            </Link>
+          <div
+            key={product.$id}
+            className="bg-white shadow-md rounded-lg p-4 flex flex-col items-center transition-all duration-300 hover:shadow-xl hover:scale-105"
+          >
+            {product.imageUrl ? (
+              // Wrap the image in a Link to redirect to the product detail page
+              <Link to={`/products/${product.$id}`}>
+                <img
+                  src={product.imageUrl}
+                  alt={product.name}
+                  className="h-44 md:h-56 w-full object-contain transform hover:scale-105 transition-transform rounded-md shadow-lg"/>
+              </Link>
+            ) : (
+              <div className="w-full h-40 flex items-center justify-center bg-gray-200 rounded-md">
+                No Image
+              </div>
+            )}
+            <h2 className="text-lg font-semibold mt-2">{product.name}</h2>
+            <p className="text-green-600 font-bold text-xl">₹{product.price}</p>
             <button
               onClick={() => addToCart(product)}
-              className="mt-4 px-4 py-2  bg-green-800 text-white font-semibold rounded-md hover:bg-yellow-600 transition-all"
-            >
+              className="mt-4 w-full px-5 py-3 bg-green-800 text-white font-semibold rounded-lg hover:bg-green-700 transition-all flex items-center justify-center space-x-2"            >
               Add to Cart
             </button>
           </div>

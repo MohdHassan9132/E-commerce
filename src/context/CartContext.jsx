@@ -1,44 +1,66 @@
-import { createContext, useState } from "react";
+import React, { createContext, useState, useEffect, useContext } from "react";
 
-// Create Context
 export const CartContext = createContext();
 
-// Cart Provider Component
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
 
-  // Add item to cart
-  const addToCart = (item) => {
+  // Add to cart: If product exists, increase quantity; otherwise, add new item.
+  const addToCart = (product) => {
     setCart((prevCart) => {
-      const existingItem = prevCart.find((cartItem) => cartItem.id === item.id);
-      if (existingItem) {
-        return prevCart.map((cartItem) =>
-          cartItem.id === item.id
-            ? { ...cartItem, quantity: (cartItem.quantity || 1) + 1 }
-            : cartItem
+      const existingProduct = prevCart.find((item) => item.$id === product.$id);
+      if (existingProduct) {
+        return prevCart.map((item) =>
+          item.$id === product.$id
+            ? { ...item, quantity: (item.quantity || 1) + 1 }
+            : item
         );
       } else {
-        return [...prevCart, { ...item, quantity: 1 }];
+        return [...prevCart, { ...product, quantity: 1 }];
       }
     });
   };
 
-  // Remove one quantity of an item from cart
-  const removeFromCart = (id) => {
-    setCart((prevCart) => {
-      return prevCart
-        .map((item) =>
-          item.id === id
-            ? { ...item, quantity: item.quantity - 1 }
-            : item
-        )
-        .filter((item) => item.quantity > 0);
-    });
+  // Remove the whole item regardless of quantity.
+  const removeFromCart = (productId) => {
+    setCart((prevCart) => prevCart.filter((item) => item.$id !== productId));
+  };
+
+  // Reduce the quantity by 1 if above 1. If quantity would drop below 1, remove the item.
+  const reduceQuantity = (productId) => {
+    setCart((prevCart) =>
+      prevCart
+        .map((item) => {
+          if (item.$id === productId) {
+            const newQuantity = (item.quantity || 1) - 1;
+            return newQuantity >= 1 ? { ...item, quantity: newQuantity } : null;
+          }
+          return item;
+        })
+        .filter(Boolean)
+    );
+  };
+
+  // ✅ Clear the entire cart (Fix for "clearCart is not a function" issue)
+  const clearCart = () => {
+    setCart([]);
+  };
+
+  // Calculate total cart amount
+  const getTotalAmount = () => {
+    return cart.reduce((total, item) => total + item.price * (item.quantity || 1), 0);
   };
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart }}>
+    <CartContext.Provider
+      value={{ cart, addToCart, removeFromCart, reduceQuantity, getTotalAmount, clearCart }} // ✅ Added clearCart
+    >
       {children}
     </CartContext.Provider>
   );
+};
+
+// ✅ Export `useCart` for usage in components
+export const useCart = () => {
+  return useContext(CartContext);
 };

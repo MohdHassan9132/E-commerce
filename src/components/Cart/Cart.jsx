@@ -1,74 +1,83 @@
-import { useContext } from "react";
-import images from "../../data/images";
+// Cart.js
+import React, { useContext } from "react";
 import { CartContext } from "../../context/CartContext";
 import { Link } from "react-router-dom";
+
 const Cart = () => {
-  const { cart, removeFromCart } = useContext(CartContext);
+  const { cart, removeFromCart, reduceQuantity } = useContext(CartContext);
 
-  // Calculate total price & item count
-  const totalPrice = cart.reduce((total, item) => {
-    const numericPrice = Number(item.price.replace(/\D/g, "")); // Extract only numbers
-    const quantity = item.quantity || 1; // Default to 1 if undefined
-    return total + numericPrice * quantity;
-  }, 0);
-
-  const totalItems = cart.reduce(
-    (count, item) => count + (item.quantity || 1),
+  // Calculate total amount (price * quantity)
+  const totalAmount = cart.reduce(
+    (total, item) => total + item.price * (item.quantity || 1),
     0
   );
 
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold text-center mb-6">Shopping Cart</h1>
-
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Your Cart</h1>
       {cart.length === 0 ? (
-        <p className="text-center text-gray-600">Your cart is empty.</p>
+        <p>Your cart is empty.</p>
       ) : (
-        <>
-          <div className="grid md:grid-cols-2 gap-6">
+        <div>
+          <ul className="mb-4">
             {cart.map((item) => (
-              <div
-                key={item.id}
-                className="flex justify-between items-center bg-white p-4 rounded-md shadow-md"
+              <li
+                key={item.$id}
+                className="flex items-center justify-between py-2 border-b"
               >
-                <img
-                  src={images[item.image]}
-                  alt={item.name}
-                  className="w-20 h-20 object-cover rounded-md"
-                />
-                <div>
-                  <h2 className="text-xl font-semibold">{item.name}</h2>
-                  <p className="text-gray-600">{item.price}</p>
-                  <p className="text-gray-500">
-                    Quantity: {item.quantity || 1}
-                  </p>
+                <div className="flex items-center">
+                  {item.imageUrl ? (
+                    <img
+                      src={item.imageUrl}
+                      alt={item.name}
+                      className="w-16 h-16 object-cover rounded mr-4"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 flex items-center justify-center bg-gray-200 rounded mr-4">
+                      No Image
+                    </div>
+                  )}
+                  <div>
+                    <h2 className="font-semibold">{item.name}</h2>
+                    <p className="text-sm text-gray-600">
+                      Price: ₹{item.price}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Quantity: {item.quantity || 1}
+                    </p>
+                  </div>
                 </div>
-                <button
-                  onClick={() => removeFromCart(item.id)}
-                  className="text-red-500"
-                >
-                  Remove
-                </button>
-              </div>
+                <div className="flex items-center space-x-2">
+                  {item.quantity > 1 && (
+                    <button
+                      onClick={() => reduceQuantity(item.$id)}
+                      className="bg-yellow-500 text-white px-3 py-1 rounded"
+                    >
+                      Reduce
+                    </button>
+                  )}
+                  <button
+                    onClick={() => removeFromCart(item.$id)}
+                    className="bg-red-500 text-white px-3 py-1 rounded"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </li>
             ))}
-          </div>
-
-          {/* Proceed to Buy Section */}
-          <div className="bg-white p-6 mt-6 rounded-lg shadow-md text-center max-w-md mx-auto">
-            <h2 className="text-lg font-semibold">
-              Subtotal ({totalItems} {totalItems === 1 ? "item" : "items"}):
-              <span className="font-bold text-xl">
-                {" "}
-                ₹{totalPrice.toLocaleString("en-IN")}.00
-              </span>
+          </ul>
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-bold">
+              Total: ₹{totalAmount.toFixed(2)}
             </h2>
-            <Link to="/checkout">
-              <button className="mt-4 px-6 py-3 bg-yellow-400 text-black font-semibold rounded-full hover:bg-yellow-500 transition">
-                Proceed to Buy
-              </button>
+            <Link
+              to="/checkout"
+              className="bg-blue-500 text-white px-6 py-2 rounded"
+            >
+              Proceed to Buy
             </Link>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
