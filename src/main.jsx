@@ -35,7 +35,9 @@ const router = createBrowserRouter([
       { path: "addproducts", element: <AddProduct /> },
     ],
   },
-]);
+],
+{basename:"/"}
+);
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
