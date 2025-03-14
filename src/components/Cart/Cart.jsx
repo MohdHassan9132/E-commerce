@@ -4,13 +4,9 @@ import { CartContext } from "../../context/CartContext";
 import { Link } from "react-router-dom";
 
 const Cart = () => {
-  const { cart, removeFromCart, reduceQuantity } = useContext(CartContext);
+  const { cart, removeFromCart, reduceQuantity,getTotalAmount } = useContext(CartContext);
 
-  // Calculate total amount (price * quantity)
-  const totalAmount = cart.reduce(
-    (total, item) => total + item.price * (item.quantity || 1),
-    0
-  );
+  const totalAmount = getTotalAmount();
 
   return (
     <div className="container mx-auto p-4">

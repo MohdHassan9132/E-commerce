@@ -1,16 +1,16 @@
 import { useState, useEffect } from "react";
-import { databases, storage, account, DATABASE_ID, USERS_COLLECTION_ID } from "../../appwriteConfig";
+import { databases, storage, DATABASE_ID } from "../../appwriteConfig";
+import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 const PRODUCTS_COLLECTION_ID = "67c6ae48001b7a650f40";
 const BUCKET_ID = "67c6c224003c507f072a";
 
 const AddProduct = () => {
-  const [user, setUser] = useState(null);
-  const [isSeller, setIsSeller] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [products, setProducts] = useState([]);
+  const { user, isSeller, loading } = useAuth();
   const navigate = useNavigate();
+
+  const [products, setProducts] = useState([]);
 
   // Form state
   const [name, setName] = useState("");
@@ -19,27 +19,16 @@ const AddProduct = () => {
   const [image, setImage] = useState(null);
   const [message, setMessage] = useState(null);
 
-  // Check authentication and role
+  // Check if the user is authenticated and is a seller.
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const authUser = await account.get();
-        const userDoc = await databases.getDocument(DATABASE_ID, USERS_COLLECTION_ID, authUser.$id);
-        if (userDoc.role === "seller") {
-          setUser(authUser);
-          setIsSeller(true);
-        } else {
-          navigate("/");
-        }
-      } catch (error) {
-        console.log("Not logged in or not authorized:", error.message);
+    if (!loading) {
+      if (!user) {
         navigate("/login");
-      } finally {
-        setLoading(false);
+      } else if (!isSeller) {
+        navigate("/");
       }
-    };
-    checkAuth();
-  }, [navigate]);
+    }
+  }, [user, isSeller, loading, navigate]);
 
   // Fetch products
   const fetchProducts = async () => {
@@ -52,7 +41,9 @@ const AddProduct = () => {
   };
 
   useEffect(() => {
-    if (!loading) fetchProducts();
+    if (!loading) {
+      fetchProducts();
+    }
   }, [loading]);
 
   // Handle form submission

@@ -6,21 +6,16 @@ import {
   ORDERS_COLLECTION_ID, 
   account, 
   databases, 
-  storage, 
-  BUCKET_ID,
   ID 
 } from "../../appwriteConfig"; 
 import { useCart } from "../../context/CartContext"; 
 import toast from "react-hot-toast";
 
-// Ensure you have loaded Razorpay's checkout.js script in your index.html
-// and that window.Razorpay is available.
-
 const Checkout = () => {
   const [userDetails, setUserDetails] = useState(null);
-  const [guestDetails, setGuestDetails] = useState({ name: "", email: "", phone: "", address: "" });
   const [paymentMethod, setPaymentMethod] = useState("COD");
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [errors, setErrors] = useState({ name: "", email: "", phone: "", address: "" });
   const navigate = useNavigate();
   const { cart, getTotalAmount, clearCart } = useCart();
 
@@ -31,80 +26,56 @@ const Checkout = () => {
         const userDoc = await databases.getDocument(DATABASE_ID, USERS_COLLECTION_ID, user.$id);
         setUserDetails(userDoc);
       } catch (error) {
-        console.log("User not logged in. Proceeding with guest checkout.");
+        toast.error("You must be logged in to place an order.");
+        navigate("/login");
       }
     };
     fetchUserDetails();
-  }, []);
-
-  const handleGuestInputChange = (e) => {
-    const { name, value } = e.target;
-    setGuestDetails((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // Razorpay Payment Handler
-  const handlePayment = async () => {
-    const amount = getTotalAmount() * 100; // Convert to paisa
-    return new Promise((resolve, reject) => {
-      const options = {
-        key: "rzp_test_Cq8qlQkfIGgJTg", // Replace with your actual Razorpay Test Key
-        amount: amount,
-        currency: "INR",
-        name: "My E-Commerce",
-        description: "Order Payment",
-        handler: function (response) {
-          resolve(response.razorpay_payment_id);
-        },
-        prefill: {
-          name: userDetails ? userDetails.name : guestDetails.name,
-          email: userDetails ? userDetails.email : guestDetails.email,
-          contact: userDetails ? userDetails.phone : guestDetails.phone,
-        },
-      };
-
-      const razorpay = new window.Razorpay(options);
-      razorpay.open();
-      razorpay.on("payment.failed", function (response) {
-        reject(response.error);
-      });
-    });
-  };
+  }, [navigate]);
 
   const handleCheckout = async () => {
-    // Validate required fields for guest checkout
-    if (!userDetails && (!guestDetails.name || !guestDetails.email || !guestDetails.phone || !guestDetails.address)) {
+    let validationErrors = {};
+    if (!userDetails?.name) validationErrors.name = "Name is required.";
+    if (!userDetails?.email) validationErrors.email = "Email is required.";
+    if (!userDetails?.phone) validationErrors.phone = "Phone number is required.";
+    if (!userDetails?.address) validationErrors.address = "Address is required.";
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       toast.error("Please fill in all required fields.");
       return;
     }
+
     if (cart.length === 0) {
       toast.error("Your cart is empty.");
       return;
     }
-
+    console.log(userDetails)
     setIsPlacingOrder(true);
 
     try {
-      // Calculate product IDs based on quantity (repeating the id)
-      const productIds = cart.flatMap(item => Array(item.quantity).fill(item.id));
+      const productIds = cart.map(item =>
+        JSON.stringify({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image || "",
+        })
+      );
 
-      let paymentId = "";
-      if (paymentMethod === "Online") {
-        paymentId = await handlePayment();
-      }
-
-      // Create orderData according to your schema
       const orderData = {
-        userId: userDetails ? userDetails.$id : "Guest",
-        name: userDetails ? userDetails.name : guestDetails.name,
-        email: userDetails ? userDetails.email : guestDetails.email,
-        phone: userDetails ? userDetails.phone : guestDetails.phone,
-        address: userDetails ? userDetails.address : guestDetails.address,
+        userId: userDetails.$id,
+        name: userDetails.name,
+        email: userDetails.email,
+        phone: userDetails.phone,
+        address: userDetails.address,
         paymentMode: paymentMethod,
         orderDate: new Date().toISOString(),
         orderAmount: getTotalAmount(),
         orderStatus: paymentMethod === "Online" ? "Paid" : "Pending",
-        paymentId: paymentId,
         productIds: productIds,
+        
       };
 
       await databases.createDocument(DATABASE_ID, ORDERS_COLLECTION_ID, ID.unique(), orderData);
@@ -123,30 +94,47 @@ const Checkout = () => {
     <div className="max-w-3xl mx-auto p-4">
       <h1 className="text-2xl font-semibold mb-4">Checkout</h1>
 
-      <div className="bg-white p-4 shadow-md rounded mb-4">
-        <h2 className="text-lg font-semibold mb-2">{userDetails ? "Shipping Details" : "Guest Checkout"}</h2>
-        {userDetails ? (
-          <>
-            <p><strong>Name:</strong> {userDetails.name}</p>
-            <p><strong>Email:</strong> {userDetails.email}</p>
-            <p><strong>Phone:</strong> {userDetails.phone}</p>
-            <label className="block mt-2 mb-1">Address:</label>
-            <input
-              type="text"
-              value={userDetails.address}
-              onChange={(e) => setUserDetails({ ...userDetails, address: e.target.value })}
-              className="w-full p-2 border rounded"
-            />
-          </>
-        ) : (
-          <>
-            <input type="text" name="name" placeholder="Name" value={guestDetails.name} onChange={handleGuestInputChange} className="w-full p-2 border rounded mb-2" />
-            <input type="email" name="email" placeholder="Email" value={guestDetails.email} onChange={handleGuestInputChange} className="w-full p-2 border rounded mb-2" />
-            <input type="text" name="phone" placeholder="Phone" value={guestDetails.phone} onChange={handleGuestInputChange} className="w-full p-2 border rounded mb-2" />
-            <input type="text" name="address" placeholder="Address" value={guestDetails.address} onChange={handleGuestInputChange} className="w-full p-2 border rounded mb-2" />
-          </>
-        )}
-      </div>
+      {userDetails && (
+        <div className="bg-white p-4 shadow-md rounded mb-4">
+          <h2 className="text-lg font-semibold mb-2">Shipping Details</h2>
+
+          <label className="block mt-2 mb-1">Name:</label>
+          <input
+            type="text"
+            value={userDetails.name}
+            onChange={(e) => setUserDetails({ ...userDetails, name: e.target.value })}
+            className="w-full p-2 border rounded"
+          />
+          {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
+
+          <label className="block mt-2 mb-1">Email:</label>
+          <input
+            type="email"
+            value={userDetails.email}
+            onChange={(e) => setUserDetails({ ...userDetails, email: e.target.value })}
+            className="w-full p-2 border rounded"
+          />
+          {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
+
+          <label className="block mt-2 mb-1">Phone:</label>
+          <input
+            type="text"
+            value={userDetails.phone}
+            onChange={(e) => setUserDetails({ ...userDetails, phone: e.target.value })}
+            className="w-full p-2 border rounded"
+          />
+          {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
+
+          <label className="block mt-2 mb-1">Address:</label>
+          <input
+            type="text"
+            value={userDetails.address}
+            onChange={(e) => setUserDetails({ ...userDetails, address: e.target.value })}
+            className="w-full p-2 border rounded"
+          />
+          {errors.address && <p className="text-red-500 text-sm">{errors.address}</p>}
+        </div>
+      )}
 
       <div className="bg-white p-4 shadow-md rounded mb-4">
         <h2 className="text-lg font-semibold mb-2">Select Payment Method</h2>

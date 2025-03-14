@@ -1,10 +1,9 @@
-import { useContext, useState } from "react";
-import { account, databases, DATABASE_ID, USERS_COLLECTION_ID } from "../../appwriteConfig";
+import { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { AuthContext } from "../../context/AuthContext";
 
 const Profile = () => {
-  const { user, userDoc, setUserDoc, updateUserProfile, loading } = useContext(AuthContext);
+  const { userDoc, updateProfile, logout, loading } = useAuth();
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -17,24 +16,14 @@ const Profile = () => {
   };
 
   const handleSave = async () => {
-    try {
-      const updatedDoc = await databases.updateDocument(DATABASE_ID, USERS_COLLECTION_ID, user.$id, formData);
-      setUserDoc(updatedDoc);
-      updateUserProfile();
-      setEditing(false);
-    } catch (error) {
-      console.error("Error updating profile:", error.message);
-    }
+    await updateProfile(formData);
+    setEditing(false);
   };
 
   const handleLogout = async () => {
-    try {
-      await account.deleteSession("current");
-      navigate("/");
-      window.location.reload(); // Ensure full reset
-    } catch (error) {
-      console.error("Logout failed:", error.message);
-    }
+    await logout();
+    navigate("/");
+    window.location.reload(); // Ensure full reset
   };
 
   if (loading) {
@@ -48,6 +37,7 @@ const Profile = () => {
         <>
           <p className="text-xl"><strong>Name:</strong> {userDoc.name}</p>
           <p className="text-xl"><strong>Email:</strong> {userDoc.email}</p>
+
           {editing ? (
             <>
               <input

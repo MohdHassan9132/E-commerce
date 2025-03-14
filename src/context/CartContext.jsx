@@ -5,7 +5,20 @@ export const CartContext = createContext();
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
 
-  // Add to cart: If product exists, increase quantity; otherwise, add new item.
+  // Load cart from localStorage on mount
+  useEffect(() => {
+    const savedCart = localStorage.getItem("cart");
+    if (savedCart) {
+      setCart(JSON.parse(savedCart));
+    }
+  }, []);
+
+  // Save cart to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("cart", JSON.stringify(cart));
+  }, [cart]);
+
+  // Add to cart
   const addToCart = (product) => {
     setCart((prevCart) => {
       const existingProduct = prevCart.find((item) => item.$id === product.$id);
@@ -21,12 +34,12 @@ export const CartProvider = ({ children }) => {
     });
   };
 
-  // Remove the whole item regardless of quantity.
+  // Remove from cart
   const removeFromCart = (productId) => {
     setCart((prevCart) => prevCart.filter((item) => item.$id !== productId));
   };
 
-  // Reduce the quantity by 1 if above 1. If quantity would drop below 1, remove the item.
+  // Reduce quantity
   const reduceQuantity = (productId) => {
     setCart((prevCart) =>
       prevCart
@@ -40,27 +53,26 @@ export const CartProvider = ({ children }) => {
         .filter(Boolean)
     );
   };
-
-  // ✅ Clear the entire cart (Fix for "clearCart is not a function" issue)
-  const clearCart = () => {
-    setCart([]);
-  };
-
-  // Calculate total cart amount
+  // Total Amount
   const getTotalAmount = () => {
     return cart.reduce((total, item) => total + item.price * (item.quantity || 1), 0);
   };
 
+  // Clear cart and remove from localStorage
+  const clearCart = () => {
+    setCart([]);
+    localStorage.removeItem("cart");
+  };
+
   return (
     <CartContext.Provider
-      value={{ cart, addToCart, removeFromCart, reduceQuantity, getTotalAmount, clearCart }} // ✅ Added clearCart
+      value={{ cart, addToCart, removeFromCart, reduceQuantity, clearCart,getTotalAmount }}
     >
       {children}
     </CartContext.Provider>
   );
 };
 
-// ✅ Export `useCart` for usage in components
 export const useCart = () => {
   return useContext(CartContext);
 };

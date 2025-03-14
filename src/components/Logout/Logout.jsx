@@ -1,29 +1,19 @@
 import { useEffect } from "react";
-import { account } from "../../appwriteConfig";
+import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
-const Logout = () => {
+export default function Logout() {
+  const { logout } = useAuth(); // Use logout function from AuthContext
   const navigate = useNavigate();
 
   useEffect(() => {
-    const logoutUser = async () => {
-      try {
-        await account.deleteSession("current");
-        navigate("/login");
-        window.location.reload(); // Force a refresh to update the header
-      } catch (error) {
-        console.error("Logout Error:", error.message);
-      }
+    const handleLogout = async () => {
+      await logout();
+      navigate("/login");
     };
 
-    logoutUser();
-  }, [navigate]);
+    handleLogout();
+  }, [logout, navigate]);
 
-  return (
-    <div className="text-center mt-10">
-      <p className="text-lg font-bold">Logging out...</p>
-    </div>
-  );
-};
-
-export default Logout;
+  return <p>Logging out...</p>;
+}

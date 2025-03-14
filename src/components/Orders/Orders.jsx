@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from "react";
+import { useAuth } from "../../context/AuthContext"; // Use auth context
 import { RefreshCcw, ShoppingCart } from "lucide-react";
-import { databases, ORDERS_COLLECTION_ID, DATABASE_ID, BUCKET_ID, storage } from "../../appwriteConfig";
-import badamshake from "../../assets/images/badamshake.jpg"; // fallback if needed
-import kheer from "../../assets/images/kheer.jpeg"; // fallback if needed
+import { Query } from "appwrite";
+import { databases, ORDERS_COLLECTION_ID, DATABASE_ID,storage,BUCKET_ID } from "../../appwriteConfig";
 
 const Orders = () => {
   const [activeTab, setActiveTab] = useState("Orders");
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const tabs = ["Orders", "Buy Again", "Not Yet Shipped", "Cancelled Orders"];
+  const { user } = useAuth(); // Get user from auth context
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await databases.listDocuments(DATABASE_ID, ORDERS_COLLECTION_ID);
+        const response = await databases.listDocuments(DATABASE_ID, ORDERS_COLLECTION_ID, [
+          Query.equal("userId", user.$id) // Filter orders by user ID
+        ]);
         setOrders(response.documents);
       } catch (error) {
         console.error("Error fetching orders:", error);
@@ -23,13 +24,14 @@ const Orders = () => {
       }
     };
 
-    fetchOrders();
-  }, []);
+    if (user) fetchOrders(); // Fetch orders only if user exists
+  }, [user]);
+
 
   if (loading) {
     return <p className="text-center text-lg font-semibold">Loading orders...</p>;
   }
-
+  const tabs = ["Orders", "Buy Again", "Not Yet Shipped", "Cancelled Orders"];
   return (
     <div className="container mx-auto p-4 max-w-6xl">
       {/* Page Header */}

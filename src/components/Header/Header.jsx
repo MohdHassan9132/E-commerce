@@ -5,10 +5,13 @@ import { AuthContext } from "../../context/AuthContext";
 import { CartContext } from "../../context/CartContext";
 
 const Header = () => {
-  const { user, userDoc, isSeller } = useContext(AuthContext);
+  const { userDoc, isSeller } = useContext(AuthContext);
   const [menuOpen, setMenuOpen] = useState(false);
   const { cart } = useContext(CartContext);
   const cartItemCount = cart.reduce((total, item) => total + (item.quantity || 1), 0);
+
+  console.log("isSeller from Context:", isSeller);
+  console.log("UserDoc Role:", userDoc?.role);
 
   return (
     <header className="bg-green-800 shadow-lg px-6 py-4 sticky top-0 z-50">
@@ -31,8 +34,8 @@ const Header = () => {
           <Link to="/products" className="hover:text-yellow-400">Products</Link>
           {isSeller && <Link to="/addproducts" className="hover:text-yellow-400">Add Products</Link>}
           <Link to="/orders" className="hover:text-yellow-400">Orders</Link>
-          {user ? (
-            <Link to="/profile" className="hover:text-yellow-400">{userDoc?.name || user?.name}</Link>
+          {userDoc ? (
+            <Link to="/profile" className="hover:text-yellow-400">{userDoc.name}</Link>
           ) : (
             <Link to="/login" className="hover:text-yellow-400">Login</Link>
           )}
@@ -71,9 +74,9 @@ const Header = () => {
           <Link to="/orders" className="hover:text-yellow-400" onClick={() => setMenuOpen(false)}>
             Orders
           </Link>
-          {user ? (
+          {userDoc ? (
             <Link to="/profile" className="hover:text-yellow-400" onClick={() => setMenuOpen(false)}>
-              {userDoc?.name || user?.name}
+              {userDoc.name}
             </Link>
           ) : (
             <Link to="/login" className="hover:text-yellow-400" onClick={() => setMenuOpen(false)}>
