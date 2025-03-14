@@ -33,26 +33,31 @@ const Checkout = () => {
     fetchUserDetails();
   }, [navigate]);
 
-  const handleCheckout = async () => {
-    let validationErrors = {};
-    if (!userDetails?.name) validationErrors.name = "Name is required.";
-    if (!userDetails?.email) validationErrors.email = "Email is required.";
-    if (!userDetails?.phone) validationErrors.phone = "Phone number is required.";
-    if (!userDetails?.address) validationErrors.address = "Address is required.";
+  const handleRazorpayPayment = async () => {
+    const amount = getTotalAmount() * 100;
+    const options = {
+      key: "rzp_test_Cq8qlQkfIGgJTg", 
+      amount: amount,
+      currency: "INR",
+      name: "Albaan Foods",
+      description: "Purchase Order",
+      handler: async function (response) {
+        await placeOrder("Online", "Paid");
+      },
+      prefill: {
+        name: userDetails?.name,
+        email: userDetails?.email,
+        contact: userDetails?.phone,
+      },
+      theme: {
+        color: "#3399cc",
+      },
+    };
+    const razorpay = new window.Razorpay(options);
+    razorpay.open();
+  };
 
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      toast.error("Please fill in all required fields.");
-      return;
-    }
-
-    if (cart.length === 0) {
-      toast.error("Your cart is empty.");
-      return;
-    }
-    console.log(userDetails)
-    setIsPlacingOrder(true);
-
+  const placeOrder = async (paymentMode, orderStatus) => {
     try {
       const productIds = cart.map(item =>
         JSON.stringify({
@@ -70,12 +75,11 @@ const Checkout = () => {
         email: userDetails.email,
         phone: userDetails.phone,
         address: userDetails.address,
-        paymentMode: paymentMethod,
+        paymentMode,
         orderDate: new Date().toISOString(),
         orderAmount: getTotalAmount(),
-        orderStatus: paymentMethod === "Online" ? "Paid" : "Pending",
-        productIds: productIds,
-        
+        orderStatus,
+        productIds,
       };
 
       await databases.createDocument(DATABASE_ID, ORDERS_COLLECTION_ID, ID.unique(), orderData);
@@ -90,6 +94,32 @@ const Checkout = () => {
     }
   };
 
+  const handleCheckout = async () => {
+    let validationErrors = {};
+    if (!userDetails?.name) validationErrors.name = "Name is required.";
+    if (!userDetails?.email) validationErrors.email = "Email is required.";
+    if (!userDetails?.phone) validationErrors.phone = "Phone number is required.";
+    if (!userDetails?.address) validationErrors.address = "Address is required.";
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+
+    if (cart.length === 0) {
+      toast.error("Your cart is empty.");
+      return;
+    }
+
+    setIsPlacingOrder(true);
+    if (paymentMethod === "Online") {
+      handleRazorpayPayment();
+    } else {
+      placeOrder("COD", "Pending");
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto p-4">
       <h1 className="text-2xl font-semibold mb-4">Checkout</h1>
@@ -97,7 +127,6 @@ const Checkout = () => {
       {userDetails && (
         <div className="bg-white p-4 shadow-md rounded mb-4">
           <h2 className="text-lg font-semibold mb-2">Shipping Details</h2>
-
           <label className="block mt-2 mb-1">Name:</label>
           <input
             type="text"
@@ -111,8 +140,8 @@ const Checkout = () => {
           <input
             type="email"
             value={userDetails.email}
-            onChange={(e) => setUserDetails({ ...userDetails, email: e.target.value })}
             className="w-full p-2 border rounded"
+            disabled
           />
           {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
 
