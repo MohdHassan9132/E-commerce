@@ -16,8 +16,12 @@ const AddProduct = () => {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
+  // For new image upload during add or edit
   const [image, setImage] = useState(null);
   const [message, setMessage] = useState(null);
+
+  // Editing state: if not null, we're updating an existing product.
+  const [editingProduct, setEditingProduct] = useState(null);
 
   // Check if the user is authenticated and is a seller.
   useEffect(() => {
@@ -46,50 +50,90 @@ const AddProduct = () => {
     }
   }, [loading]);
 
-  // Handle form submission
+  // Handle form submission for both add and edit modes.
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage(null);
 
-    if (!image) {
+    // For editing: if there's no new image chosen, keep the old one.
+    let imageId = editingProduct ? editingProduct.image : null;
+
+    // In add mode, image must be provided.
+    if (!editingProduct && !image) {
       setMessage({ text: "Please upload an image", type: "error" });
       return;
     }
 
     try {
-      const file = await storage.createFile(BUCKET_ID, "unique()", image);
-      const fileId = file.$id;
+      // If a new image file is provided (for add or update), upload it and get its ID.
+      if (image) {
+        const file = await storage.createFile(BUCKET_ID, "unique()", image);
+        imageId = file.$id;
+      }
 
-      await databases.createDocument(DATABASE_ID, PRODUCTS_COLLECTION_ID, "unique()", {
+      // Data to save/update
+      const productData = {
         name,
         price: parseFloat(price),
         description,
-        image: fileId,
-      });
+        image: imageId,
+      };
 
-      setMessage({ text: "Product added successfully!", type: "success" });
+      if (editingProduct) {
+        // Update existing product document
+        await databases.updateDocument(
+          DATABASE_ID,
+          PRODUCTS_COLLECTION_ID,
+          editingProduct.$id,
+          productData
+        );
+        setMessage({ text: "Product updated successfully!", type: "success" });
+      } else {
+        // Create new product document
+        await databases.createDocument(DATABASE_ID, PRODUCTS_COLLECTION_ID, "unique()", productData);
+        setMessage({ text: "Product added successfully!", type: "success" });
+      }
+
+      // Clear form & editing state
       setName("");
       setPrice("");
       setDescription("");
       setImage(null);
+      setEditingProduct(null);
       fetchProducts();
     } catch (error) {
-      console.error("Error adding product:", error);
-      setMessage({ text: "Failed to add product. Try again.", type: "error" });
+      console.error("Error processing product:", error);
+      setMessage({ text: "Failed to process product. Try again.", type: "error" });
     }
   };
 
-  // Handle product deletion
-  const handleDelete = async (productId, imageId) => {
+  // Handle product deletion (note: image is no longer deleted from storage)
+  const handleDelete = async (productId) => {
     try {
-      if (imageId) {
-        await storage.deleteFile(BUCKET_ID, imageId);
-      }
       await databases.deleteDocument(DATABASE_ID, PRODUCTS_COLLECTION_ID, productId);
       fetchProducts();
     } catch (error) {
       console.error("Error deleting product:", error);
     }
+  };
+
+  // Handle edit button click: populate form fields with product details.
+  const handleEdit = (product) => {
+    setEditingProduct(product);
+    setName(product.name);
+    setPrice(product.price);
+    setDescription(product.description);
+    // Do not set image state here so that if the user doesn't choose a new file, the old image is retained.
+  };
+
+  // Cancel edit mode.
+  const cancelEdit = () => {
+    setEditingProduct(null);
+    setName("");
+    setPrice("");
+    setDescription("");
+    setImage(null);
+    setMessage(null);
   };
 
   if (loading) return <p className="text-center">Checking authentication...</p>;
@@ -100,7 +144,9 @@ const AddProduct = () => {
       <div className="flex flex-col md:flex-row gap-8">
         {/* Product Form */}
         <div className="bg-white p-6 rounded-lg shadow-md w-full md:w-1/3">
-          <h2 className="text-2xl font-semibold text-gray-700 text-center mb-4">Add Product</h2>
+          <h2 className="text-2xl font-semibold text-gray-700 text-center mb-4">
+            {editingProduct ? "Edit Product" : "Add Product"}
+          </h2>
           <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
             <input
               type="text"
@@ -132,20 +178,34 @@ const AddProduct = () => {
             <input
               type="file"
               onChange={(e) => setImage(e.target.files[0])}
-              required
               className="border border-gray-300 rounded-lg p-2 w-full file:bg-blue-500 file:text-white file:px-3 file:py-1 file:rounded-md file:border-none file:cursor-pointer"
             />
 
-            <button
-              type="submit"
-              className="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-all font-medium"
-            >
-              Add Product
-            </button>
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                className="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-all font-medium flex-1"
+              >
+                {editingProduct ? "Update Product" : "Add Product"}
+              </button>
+              {editingProduct && (
+                <button
+                  type="button"
+                  onClick={cancelEdit}
+                  className="bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-all font-medium flex-1"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
           </form>
 
           {message && (
-            <p className={`mt-3 text-center text-sm ${message.type === "success" ? "text-green-600" : "text-red-600"}`}>
+            <p
+              className={`mt-3 text-center text-sm ${
+                message.type === "success" ? "text-green-600" : "text-red-600"
+              }`}
+            >
               {message.text}
             </p>
           )}
@@ -167,12 +227,20 @@ const AddProduct = () => {
                 <h3 className="text-xl font-bold">{product.name}</h3>
                 <p className="text-green-600 font-semibold">₹{product.price}</p>
                 <p className="text-gray-600">{product.description}</p>
-                <button
-                  onClick={() => handleDelete(product.$id, product.image)}
-                  className="mt-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
-                >
-                  Delete
-                </button>
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={() => handleEdit(product)}
+                    className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition flex-1"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(product.$id)}
+                    className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition flex-1"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             ))}
           </div>

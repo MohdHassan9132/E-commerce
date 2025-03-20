@@ -40,25 +40,17 @@ export default function Signup() {
       <div className="bg-white shadow-xl rounded-lg p-8 w-full max-w-md text-center">
         <h2 className="text-2xl font-semibold mb-6 text-gray-800">Create a new account</h2>
         {error && <p className="text-red-500 mb-3 text-sm">{error}</p>}
-        <div className="flex flex-col items-center gap-4 p-4 border rounded-lg bg-gray-50 shadow-sm w-full">
-          <button 
-            onClick={loginWithGoogle} 
-            className="w-full flex items-center justify-center bg-white text-black py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition-all gap-3 shadow-sm"
-          >
-            <FcGoogle size={24} /> <span className="font-medium">Google</span>
-          </button>
+        {/* <div className="flex flex-col items-center gap-4 p-4 border rounded-lg bg-gray-50 shadow-sm w-full">
+
           <button 
             onClick={loginWithFacebook} 
             className="w-full flex items-center justify-center bg-white text-black py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition-all gap-3 shadow-sm"
           >
             <FaFacebook size={24} className="text-blue-600" /> <span className="font-medium">Facebook</span>
           </button>
-        </div>
-        <div className="flex items-center my-6">
-          <hr className="flex-grow border-gray-300" />
-          <span className="px-3 text-gray-500 text-sm">OR</span>
-          <hr className="flex-grow border-gray-300" />
-        </div>
+
+        </div> */}
+
         <form onSubmit={handleSignup} className="flex flex-col gap-4 w-full p-4 border rounded-lg bg-gray-50 shadow-sm">
           <label className="text-sm font-medium text-gray-700 text-left">Full Name</label>
           <input 
@@ -69,6 +61,7 @@ export default function Signup() {
             onChange={(e) => setName(e.target.value)}
             required
           />
+
           <label className="text-sm font-medium text-gray-700 text-left">Email Address</label>
           <input 
             type="email"
@@ -78,6 +71,7 @@ export default function Signup() {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
+
           <label className="text-sm font-medium text-gray-700 text-left">Password</label>
           <input 
             type="password"
@@ -87,6 +81,7 @@ export default function Signup() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
+
           <button 
             type="submit" 
             className="bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition"
@@ -94,6 +89,18 @@ export default function Signup() {
             Sign Up
           </button>
         </form>
+
+        <div className="flex items-center my-6">
+          <hr className="flex-grow border-gray-300" />
+          <span className="px-3 text-gray-500 text-sm">OR</span>
+          <hr className="flex-grow border-gray-300" />
+        </div>
+        <button 
+            onClick={loginWithGoogle} 
+            className="w-full flex items-center justify-center bg-white text-black py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition-all gap-3 shadow-sm"
+          >
+            <FcGoogle size={24} /> <span className="font-medium">Google</span>
+          </button>
         <p className="mt-4">Already have an account? <Link to="/login" className="text-blue-600">Sign in</Link></p>
       </div>
     </div>

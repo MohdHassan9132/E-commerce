@@ -33,6 +33,7 @@ const Header = () => {
         <div className="hidden md:flex items-center space-x-8">
           <Link to="/products" className="hover:text-yellow-400">Products</Link>
           {isSeller && <Link to="/addproducts" className="hover:text-yellow-400">Add Products</Link>}
+          {isSeller && <Link to="/adminorders" className="hover:text-yellow-400">Admin Orders</Link>}
           <Link to="/orders" className="hover:text-yellow-400">Orders</Link>
           {userDoc ? (
             <Link to="/profile" className="hover:text-yellow-400">{userDoc.name}</Link>
@@ -69,6 +70,11 @@ const Header = () => {
           {isSeller && (
             <Link to="/addproducts" className="hover:text-yellow-400" onClick={() => setMenuOpen(false)}>
               Add Products
+            </Link>
+          )}
+           {isSeller && (
+            <Link to="/adminorders" className="hover:text-yellow-400" onClick={() => setMenuOpen(false)}>
+              Admin Orders
             </Link>
           )}
           <Link to="/orders" className="hover:text-yellow-400" onClick={() => setMenuOpen(false)}>

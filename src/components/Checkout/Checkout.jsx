@@ -57,18 +57,18 @@ const Checkout = () => {
     razorpay.open();
   };
 
-  const placeOrder = async (paymentMode, orderStatus) => {
+  const placeOrder = async (paymentMode, paymentstatus) => {
     try {
       const productIds = cart.map(item =>
         JSON.stringify({
-          id: item.id,
+          $id: item.$id || item.id, // Use Appwrite's unique $id or fallback to id
           name: item.name,
           price: item.price,
           quantity: item.quantity,
           image: item.image || "",
         })
       );
-
+  
       const orderData = {
         userId: userDetails.$id,
         name: userDetails.name,
@@ -78,11 +78,16 @@ const Checkout = () => {
         paymentMode,
         orderDate: new Date().toISOString(),
         orderAmount: getTotalAmount(),
-        orderStatus,
+        paymentstatus,
         productIds,
       };
-
-      await databases.createDocument(DATABASE_ID, ORDERS_COLLECTION_ID, ID.unique(), orderData);
+  
+      await databases.createDocument(
+        DATABASE_ID,
+        ORDERS_COLLECTION_ID,
+        ID.unique(),
+        orderData
+      );
       toast.success("Order placed successfully!");
       clearCart();
       navigate("/orders");
@@ -93,6 +98,7 @@ const Checkout = () => {
       setIsPlacingOrder(false);
     }
   };
+  
 
   const handleCheckout = async () => {
     let validationErrors = {};
@@ -181,7 +187,7 @@ const Checkout = () => {
         {isPlacingOrder ? "Placing Order..." : "Place Order"}
       </button>
     </div>
-  );
+  ); 
 };
 
 export default Checkout;

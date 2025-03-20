@@ -40,29 +40,6 @@ export default function Login() {
         <h2 className="text-2xl font-semibold mb-6 text-gray-800">Sign in to your account</h2>
         {error && <p className="text-red-500 mb-3 text-sm">{error}</p>}
 
-        {/* Social Login Buttons */}
-        <div className="flex flex-col items-center gap-4 p-4 border rounded-lg bg-gray-50 shadow-sm w-full">
-          <button 
-            onClick={loginWithGoogle} 
-            className="w-full flex items-center justify-center bg-white text-black py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition-all gap-3 shadow-sm"
-          >
-            <FcGoogle size={24} /> <span className="font-medium">Google</span>
-          </button>
-          <button 
-            onClick={loginWithFacebook} 
-            className="w-full flex items-center justify-center bg-white text-black py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition-all gap-3 shadow-sm"
-          >
-            <FaFacebook size={24} className="text-blue-600" /> <span className="font-medium">Facebook</span>
-          </button>
-        </div>
-
-        {/* Divider */}
-        <div className="flex items-center my-6">
-          <hr className="flex-grow border-gray-300" />
-          <span className="px-3 text-gray-500 text-sm">OR</span>
-          <hr className="flex-grow border-gray-300" />
-        </div>
-
         {/* Login Form */}
         <form onSubmit={handleLogin} className="flex flex-col gap-4 w-full p-4 border rounded-lg bg-gray-50 shadow-sm">
           <label className="text-sm font-medium text-gray-700 text-left">Email Address</label>
@@ -90,6 +67,29 @@ export default function Login() {
             Sign In
           </button>
         </form>
+
+        {/* Divider */}
+        <div className="flex items-center my-6">
+          <hr className="flex-grow border-gray-300" />
+          <span className="px-3 text-gray-500 text-sm">OR</span>
+          <hr className="flex-grow border-gray-300" />
+        </div>
+
+        {/* Social Login Buttons */}
+        <div className="flex flex-col items-center gap-4 p-4">
+        <button 
+  onClick={loginWithGoogle} 
+  className="w-12 h-12 flex items-center justify-center bg-white text-black rounded-full border border-gray-300 hover:bg-gray-100 transition-all"
+>
+  <FcGoogle size={24} />
+</button>
+          {/* <button 
+            onClick={loginWithFacebook} 
+            className="w-full flex items-center justify-center bg-white text-black py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition-all gap-3 shadow-sm"
+          >
+            <FaFacebook size={24} className="text-blue-600" /> <span className="font-medium">Facebook</span>
+          </button> */}
+        </div>
 
         <p className="mt-4">Don't have an account? <Link to="/signup" className="text-blue-600">Sign up</Link></p>
       </div>

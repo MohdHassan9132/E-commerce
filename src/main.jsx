@@ -19,6 +19,9 @@ import Logout from "./components/Logout/Logout.jsx";
 import AddProduct from "./components/AddProduct/AddProduct.jsx";
 import VerifyEmail from "./components/VerifyEmail/VerifyEmail.jsx";
 import CheckEmail from "./components/CheckEmail/CheckEmal.jsx";
+import PrivacyPolicy from "./components/PrivacyPolicy/PrivacyPolicy.jsx";
+import AccountDeletion from "./components/AccountDeletion/AccountDeletion.jsx";
+import AdminOrders from "./components/AdminOrders/Adminorders.jsx";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -36,7 +39,10 @@ const router = createBrowserRouter([
       { path: "logout", element: <Logout /> },
       {path: "check-email", element: <CheckEmail/>},
       { path: "addproducts", element: <PrivateRoute> <AddProduct />  </PrivateRoute> },
-      {path: "verify", element: <VerifyEmail/>}
+      {path: "verify", element: <VerifyEmail/>},
+      {path : "privacypolicy", element: <PrivacyPolicy/>},
+      {path : "accountdeletion",element: <AccountDeletion/>},
+      {path: "adminorders",element: <AdminOrders/>}
     ],
   },
 ],

@@ -72,15 +72,6 @@ export const AuthProvider = ({ children }) => {
       console.error("Google login failed:", error);
     }
   };
-
-  const loginWithFacebook = async () => {
-    try {
-      await account.createOAuth2Session("facebook", `${window.location.origin}/profile`);
-    } catch (error) {
-      console.error("Facebook login failed:", error);
-    }
-  };
-
   const logout = async () => {
     try {
       await account.deleteSession("current");
@@ -93,13 +84,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // const verifyEmail = async (userId, secret) => {
-  //   try {
-  //     await account.updateVerification(userId, secret);
-  //   } catch (error) {
-  //     throw error;
-  //   }
-  // };
+  const verifyEmail = async (userId, secret) => {
+    try {
+      await account.updateVerification(userId, secret);
+    } catch (error) {
+      throw error;
+    }
+  };
 
   const updateProfile = async (updates) => {
     if (!user) return;
@@ -145,9 +136,8 @@ export const AuthProvider = ({ children }) => {
         signup,
         login,
         loginWithGoogle,
-        loginWithFacebook,
         logout,
-        // verifyEmail,
+        verifyEmail,
         updateProfile,
         saveUserToDB,
       }}

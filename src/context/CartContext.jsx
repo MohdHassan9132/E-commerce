@@ -21,9 +21,10 @@ export const CartProvider = ({ children }) => {
   // Add to cart
   const addToCart = (product) => {
     setCart((prevCart) => {
-      const existingProduct = prevCart.find((item) => item.$id === product.$id);
+      // Check if the product already exists in the cart using $id.
+      const existingProduct = prevCart.find(item => item.$id === product.$id);
       if (existingProduct) {
-        return prevCart.map((item) =>
+        return prevCart.map(item =>
           item.$id === product.$id
             ? { ...item, quantity: (item.quantity || 1) + 1 }
             : item
@@ -33,6 +34,8 @@ export const CartProvider = ({ children }) => {
       }
     });
   };
+  
+
 
   // Remove from cart
   const removeFromCart = (productId) => {

@@ -1,21 +1,25 @@
 import React, { useState, useEffect } from "react";
-import { useAuth } from "../../context/AuthContext"; // Use auth context
+import { useAuth } from "../../context/AuthContext"; // Auth context
+import { useCart } from "../../context/CartContext"; // Custom cart hook
 import { RefreshCcw, ShoppingCart } from "lucide-react";
 import { Query } from "appwrite";
-import { databases, ORDERS_COLLECTION_ID, DATABASE_ID,storage,BUCKET_ID } from "../../appwriteConfig";
+import { databases, ORDERS_COLLECTION_ID, DATABASE_ID, storage, BUCKET_ID } from "../../appwriteConfig";
 
 const Orders = () => {
   const [activeTab, setActiveTab] = useState("Orders");
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth(); // Get user from auth context
+  const { user } = useAuth();
+  const { addToCart } = useCart();
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await databases.listDocuments(DATABASE_ID, ORDERS_COLLECTION_ID, [
-          Query.equal("userId", user.$id) // Filter orders by user ID
-        ]);
+        const response = await databases.listDocuments(
+          DATABASE_ID,
+          ORDERS_COLLECTION_ID,
+          [Query.equal("userId", user.$id)]
+        );
         setOrders(response.documents);
       } catch (error) {
         console.error("Error fetching orders:", error);
@@ -24,14 +28,29 @@ const Orders = () => {
       }
     };
 
-    if (user) fetchOrders(); // Fetch orders only if user exists
+    if (user) fetchOrders();
   }, [user]);
 
+  // Tab filtering logic remains unchanged
+  const filteredOrders = orders.filter((order) => {
+    switch (activeTab) {
+      case "Buy Again":
+        return order.deliverystatus === "Delivered";
+      case "Not Yet Shipped":
+        return order.deliverystatus === "Not yet shipped";
+      case "Cancelled Orders":
+        return order.deliverystatus === "Cancelled";
+      default:
+        return true;
+    }
+  });
 
   if (loading) {
     return <p className="text-center text-lg font-semibold">Loading orders...</p>;
   }
+
   const tabs = ["Orders", "Buy Again", "Not Yet Shipped", "Cancelled Orders"];
+
   return (
     <div className="container mx-auto p-4 max-w-6xl">
       {/* Page Header */}
@@ -71,7 +90,8 @@ const Orders = () => {
       {/* Orders Count & Filter */}
       <div className="flex items-center justify-between mb-4">
         <div className="text-sm">
-          <strong>{orders.length} orders</strong> placed in <span className="text-gray-500">past 3 months</span>
+          <strong>{filteredOrders.length} orders</strong> placed in{" "}
+          <span className="text-gray-500">past 3 months</span>
         </div>
         <div>
           <select className="border border-gray-300 text-sm rounded px-2 py-1">
@@ -85,12 +105,11 @@ const Orders = () => {
 
       {/* Orders List */}
       <div className="space-y-4">
-        {orders.length === 0 ? (
+        {filteredOrders.length === 0 ? (
           <p className="text-gray-600">No orders found.</p>
         ) : (
-          orders.map((order) => {
-            // Parse the productIds field.
-            // It might be stored as a JSON array string or as newline-separated JSON strings.
+          filteredOrders.map((order) => {
+            // Parse the productIds field (supports JSON array or newline-separated strings)
             let products = [];
             if (Array.isArray(order.productIds)) {
               products = order.productIds;
@@ -103,22 +122,25 @@ const Orders = () => {
                   console.error("Error parsing productIds as JSON array:", error);
                 }
               } else {
-                // Assume newline-separated JSON strings.
                 const lines = trimmed.split("\n").filter((line) => line.trim() !== "");
-                products = lines.map((line) => {
-                  try {
-                    return JSON.parse(line);
-                  } catch (e) {
-                    console.error("Error parsing product line:", line, e);
-                    return null;
-                  }
-                }).filter((item) => item !== null);
+                products = lines
+                  .map((line) => {
+                    try {
+                      return JSON.parse(line);
+                    } catch (e) {
+                      console.error("Error parsing product line:", line, e);
+                      return null;
+                    }
+                  })
+                  .filter((item) => item !== null);
               }
             }
-            // Convert any remaining string product to object.
-            products = products.map((prod) => (typeof prod === "string" ? JSON.parse(prod) : prod));
+            // Convert stringified products to objects if needed
+            products = products.map((prod) =>
+              typeof prod === "string" ? JSON.parse(prod) : prod
+            );
 
-            // Map fields from the order document. Use fallback values if fields are missing.
+            // Map order fields with fallbacks
             const orderId = order.$id || order.id || "N/A";
             const orderDate = order.orderDate
               ? new Date(order.orderDate).toLocaleDateString("en-US", {
@@ -129,16 +151,20 @@ const Orders = () => {
               : "N/A";
             const orderAmount = order.orderAmount || 0;
             const shipTo = order.shipTo || order.address || "N/A";
-            const deliveryDate = order.deliveryDate
-              ? new Date(order.deliveryDate).toLocaleDateString("en-US", { day: "numeric", month: "long" })
+            const deliveryDate = order.deliverydate
+              ? new Date(order.deliverydate).toLocaleDateString("en-US", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })
               : "N/A";
-            const deliveryNote = order.deliveryNote || "";
+            const deliveryNote = order.deliverynote || "";
+            const deliveryStatus = order.deliverystatus || "Not yet shipped";
 
             return (
               <div key={orderId} className="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
                 {/* Order Header */}
                 <div className="p-4 border-b border-gray-300 flex flex-col md:flex-row md:justify-between md:items-center gap-2">
-                  {/* Left: ORDER PLACED, TOTAL, SHIP TO */}
                   <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 text-sm text-gray-700">
                     <div>
                       <span className="font-semibold">ORDER PLACED <br /></span>
@@ -152,7 +178,6 @@ const Orders = () => {
                       <span className="text-blue-600">{shipTo}</span>
                     </div>
                   </div>
-                  {/* Right: ORDER #, View order details, Invoice */}
                   <div className="flex flex-col items-end text-sm text-gray-700 space-y-1">
                     <div>
                       <span className="font-semibold">Order #</span> {orderId}
@@ -164,19 +189,22 @@ const Orders = () => {
                   </div>
                 </div>
 
-                {/* Delivery Date & Handling Statement */}
-                <div className="px-4 pt-3 text-sm text-left">
-                  {deliveryDate !== "N/A" && (
-                    <strong className="text-green-700">
-                      Delivered {deliveryDate}
-                    </strong>
-                  )}
-                  {deliveryNote && <span className="text-gray-600"> <br />{deliveryNote}</span>}
-                </div>
+                {/* Delivery Status & Date */}
+<div className="px-4 pt-3 text-sm text-left">
+  <strong className="text-yellow-600">
+    {deliveryStatus}
+  </strong>
+  <br />
+  <strong className="text-green-700">
+    {deliveryStatus === "Delivered" ? `Delivered on ${deliveryDate}` : `Action Date: ${deliveryDate}`}
+  </strong>
+  {deliveryStatus === "Delivered" && deliveryNote && (
+    <span className="text-gray-600"><br />{deliveryNote}</span>
+  )}
+</div>
 
-                {/* Main Content */}
+                {/* Products List in Order */}
                 <div className="p-4 grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
-                  {/* Left Column: All Product Images & Details */}
                   <div className="flex flex-col space-y-4 md:col-span-2">
                     {products.length > 0 ? (
                       products.map((product, index) => (
@@ -196,9 +224,20 @@ const Orders = () => {
                             <p className="text-blue-600 hover:underline font-medium">
                               {product.name || ""}
                             </p>
-                            {/* Buttons in the same row */}
+                            {/* "Buy it again" button using addToCart */}
                             <div className="flex space-x-2">
-                              <button className="bg-yellow-500 hover:bg-yellow-400 text-yellow-800 px-3 py-1 rounded-full text-sm flex items-center space-x-2">
+                              <button
+                                onClick={() =>
+                                  addToCart({
+                                    ...product,
+                                    // Ensure imageUrl is provided for the cart display
+                                    imageUrl: product.image
+                                      ? storage.getFilePreview(BUCKET_ID, product.image)
+                                      : null,
+                                  })
+                                }
+                                className="bg-yellow-500 hover:bg-yellow-400 text-yellow-800 px-3 py-1 rounded-full text-sm flex items-center space-x-2"
+                              >
                                 <RefreshCcw className="w-4 h-4" />
                                 <ShoppingCart className="w-4 h-4" />
                                 <span>Buy it again</span>
@@ -215,7 +254,7 @@ const Orders = () => {
                     )}
                   </div>
 
-                  {/* Right Column: Action Buttons */}
+                  {/* Right Column: Other Action Buttons */}
                   <div className="flex flex-col items-end space-y-2 md:col-span-2 md:justify-self-end w-full">
                     <button className="border border-gray-300 hover:bg-gray-50 px-4 py-1 rounded-full text-sm w-64 font-semibold">
                       Track package

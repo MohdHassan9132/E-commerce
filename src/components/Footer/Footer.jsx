@@ -1,5 +1,6 @@
 import React from "react";
 import { FaPhoneAlt, FaEnvelope, FaMapMarkerAlt } from "react-icons/fa";
+import { Link } from "react-router-dom";
 
 function Footer() {
   return (
@@ -65,8 +66,9 @@ function Footer() {
           {/* Quick Links - Optional */}
           <div className="mt-4 flex justify-center gap-6 text-sm">
             <a href="#" className="text-gray-300 hover:text-yellow-300 transition-colors">Terms of Service</a>
-            <a href="#" className="text-gray-300 hover:text-yellow-300 transition-colors">Privacy Policy</a>
+            <Link to = "/privacypolicy">Privacy Policy</Link>
             <a href="#" className="text-gray-300 hover:text-yellow-300 transition-colors">FAQ</a>
+            <Link to='/accountdeletion'>Account Deletion</Link>
           </div>
         </div>
       </div>
