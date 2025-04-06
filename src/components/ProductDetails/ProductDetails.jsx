@@ -1,35 +1,38 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useParams } from "react-router-dom";
 import { databases, storage } from "../../appwriteConfig";
-import { CartContext } from "../../context/CartContext"; // Import CartContext for addToCart
+import { CartContext } from "../../context/CartContext";
 
 const DATABASE_ID = "67c6ae2b003333b15b7a";
 const COLLECTION_ID = "67c6ae48001b7a650f40";
 const BUCKET_ID = "67c6c224003c507f072a";
 
 const ProductDetails = () => {
-  const { id } = useParams(); // Get product id from the route
+  const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { addToCart } = useContext(CartContext); // Get addToCart from context
+  const { addToCart } = useContext(CartContext);
 
   useEffect(() => {
     const fetchProductDetails = async () => {
       try {
-        // Fetch the product document using the product id
         const response = await databases.getDocument(
           DATABASE_ID,
           COLLECTION_ID,
           id
         );
+        console.log("Fetched product data:", response);
 
-        // Convert image id to URL (if image exists)
-        const imageUrl = response.image
-          ? storage.getFilePreview(BUCKET_ID, response.image)
-          : null;
+        let imageUrl = null;
+        if (response.image) {
+          const url = storage.getFileView(BUCKET_ID, response.image);
+          imageUrl = url.toString();
+          console.log("Generated image URL:", imageUrl);
+        } else {
+          console.warn("No image ID found for this product.");
+        }
 
-        // Store product details along with the preview URL
         setProduct({ ...response, imageUrl });
       } catch (err) {
         console.error("Error fetching product details:", err);

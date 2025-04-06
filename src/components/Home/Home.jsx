@@ -24,7 +24,7 @@ const Home = () => {
       const updatedProducts = response.documents.map((product) => ({
         ...product,
         imageUrl: product.image
-          ? storage.getFilePreview(BUCKET_ID, product.image)
+          ? storage.getFileView(BUCKET_ID, product.image)
           : null,
       }));
 

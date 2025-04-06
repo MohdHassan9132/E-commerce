@@ -211,7 +211,7 @@ const Orders = () => {
                         <div key={index} className="flex items-start space-x-3">
                           {product.image ? (
                             <img 
-                              src={storage.getFilePreview(BUCKET_ID, product.image)}
+                              src={storage.getFileView(BUCKET_ID, product.image).toString()}
                               alt={product.name}
                               className="w-32 h-40 object-cover rounded-lg shadow-md"
                             />
@@ -232,7 +232,7 @@ const Orders = () => {
                                     ...product,
                                     // Ensure imageUrl is provided for the cart display
                                     imageUrl: product.image
-                                      ? storage.getFilePreview(BUCKET_ID, product.image)
+                                      ? storage.getFileView(BUCKET_ID, product.image)
                                       : null,
                                   })
                                 }
