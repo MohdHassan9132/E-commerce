@@ -44,8 +44,8 @@ function Footer() {
                 <div className="w-10 h-10 bg-green-700 rounded-full flex items-center justify-center group-hover:bg-yellow-500 transition-colors duration-300 flex-shrink-0">
                   <FaPhoneAlt className="text-white" />
                 </div>
-                <a href="tel:8700629458" className="text-gray-100 font-medium transition-colors duration-300 hover:text-yellow-300">
-                  +91 8700629458
+                <a href="tel:8810320855" className="text-gray-100 font-medium transition-colors duration-300 hover:text-yellow-300">
+                  +91 8810320855
                 </a>
               </div>
               {/* Email */}
@@ -53,8 +53,8 @@ function Footer() {
                 <div className="w-10 h-10 bg-green-700 rounded-full flex items-center justify-center group-hover:bg-yellow-500 transition-colors duration-300 flex-shrink-0">
                   <FaEnvelope className="text-white" />
                 </div>
-                <a href="mailto:mohdsadiqameen989@gmail.com" className="text-gray-100 font-medium transition-colors duration-300 hover:text-yellow-300 break-all">
-                  mohdsadiqameen989@gmail.com
+                <a href="mailto:zaynkhan946@gmail.com" className="text-gray-100 font-medium transition-colors duration-300 hover:text-yellow-300 break-all">
+                   zaynkhan946@gmail.com
                 </a>
               </div>
               {/* Address */}
@@ -63,7 +63,7 @@ function Footer() {
                   <FaMapMarkerAlt className="text-white" />
                 </div>
                 <a href="https://www.google.com/maps/search/?q=New+Delhi" target="_blank" rel="noopener noreferrer" className="text-gray-100 font-medium transition-colors duration-300 hover:text-yellow-300">
-                  Rz-58/1, Street no. 3, Tughlakabad Extension, New Delhi-110019
+                  opposite of st no. 51 jaffrabad, new delhi- 110053
                 </a>
               </div>
             </div>
