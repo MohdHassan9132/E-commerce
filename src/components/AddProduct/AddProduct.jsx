@@ -219,7 +219,7 @@ const AddProduct = () => {
               <div key={product.$id} className="bg-white shadow-md rounded-lg p-4">
                 {product.image && (
                   <img
-                    src={storage.getFilePreview(BUCKET_ID, product.image)}
+                    src={storage.getFileView(BUCKET_ID, product.image).toString()}
                     alt={product.name}
                     className="w-full h-40 object-cover rounded-md mb-2"
                   />
