@@ -14,7 +14,7 @@ export default function Login() {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      navigate("/profile");
+      navigate("/");
     }
   }, [user, navigate]);
 
@@ -28,7 +28,7 @@ export default function Login() {
     try {
       await login(email, password);
       saveUserToDB()
-      navigate("/profile");
+      navigate("/");
     } catch (error) {
       setError(error.message);
     }
