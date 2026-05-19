@@ -16,7 +16,7 @@ export default function Signup() {
   // If already logged in, redirect to profile
   useEffect(() => {
     if (user) {
-      navigate("/profile");
+      navigate("/");
     }
   }, [user, navigate]);
 

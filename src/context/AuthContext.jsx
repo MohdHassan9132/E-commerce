@@ -67,7 +67,7 @@ export const AuthProvider = ({ children }) => {
 
   const loginWithGoogle = async () => {
     try {
-      await account.createOAuth2Session("google", `${window.location.origin}/profile`);
+      await account.createOAuth2Session("google", `${window.location.origin}/`);
     } catch (error) {
       console.error("Google login failed:", error);
     }
